@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Message For You ❤️</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;600&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- STYLES --- */
+        :root { --primary: #ff004c; --accent: #ff6b9d; --dark: #0a0a0a; --glass: rgba(255, 255, 255, 0.05); --border: rgba(255, 255, 255, 0.1); }
+        * { box-sizing: border-box; }
+        body { margin: 0; background-color: var(--dark); color: white; font-family: 'Montserrat', sans-serif; overflow-x: hidden; height: 100vh; overflow-y: hidden; }
+        #sakura-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+        
+        .ambient-light { position: fixed; width: 100vw; height: 100vh; z-index: -1; overflow: hidden; }
+        .blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.4; animation: float 10s infinite ease-in-out; }
+        .blob-1 { top: -10%; left: -10%; width: 500px; height: 500px; background: var(--primary); }
+        .blob-2 { bottom: -10%; right: -10%; width: 400px; height: 400px; background: purple; animation-delay: 2s; }
+        .blob-3 { top: 40%; left: 40%; width: 300px; height: 300px; background: var(--accent); animation-delay: 4s; }
+        @keyframes float { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(30px, -30px) scale(1.1); } }
+
+        h1 { font-family: 'Cinzel', serif; text-align: center; text-shadow: 0 0 20px rgba(255, 0, 76, 0.5); margin-bottom: 20px; min-height: 40px; }
+        p { color: #ddd; text-align: center; line-height: 1.6; max-width: 600px; margin: 0 auto; min-height: 24px; }
+        .cursor::after { content: '|'; animation: blink 1s infinite; color: var(--primary); }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        section { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; position: relative; z-index: 2; border-bottom: 1px solid rgba(255,255,255,0.02); }
+        .card { background: var(--glass); backdrop-filter: blur(16px); border: 1px solid var(--border); padding: 50px 30px; border-radius: 20px; width: 100%; max-width: 500px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); transform: translateY(50px); opacity: 0; }
+        
+        .btn { background: linear-gradient(45deg, var(--primary), #ff4d4d); border: none; padding: 15px 40px; color: white; font-size: 1.2rem; border-radius: 50px; cursor: pointer; margin-top: 30px; box-shadow: 0 0 20px var(--primary); transition: 0.3s; text-transform: uppercase; letter-spacing: 2px; font-weight: bold; display: block; margin-left: auto; margin-right: auto; }
+        .btn:hover { transform: scale(1.05); box-shadow: 0 0 40px var(--primary); }
+
+        #entry-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 999; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; }
+        
+        #loader-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 800; flex-direction: column; justify-content: center; align-items: center; }
+        .progress-container { width: 80%; max-width: 400px; height: 6px; background: #333; border-radius: 10px; margin-top: 20px; overflow: hidden; }
+        .progress-bar { height: 100%; width: 0%; background: var(--primary); box-shadow: 0 0 10px var(--primary); transition: width 0.1s linear; }
+
+        #prank-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 900; overflow: hidden; }
+        .meme-popup { position: absolute; width: 250px; border: 5px solid black; box-shadow: 10px 10px 0px rgba(0,0,0,1); animation: popIn 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 901; }
+        .meme-center { top: 50%; left: 50%; transform: translate(-50%, -50%); width: 350px; z-index: 902; }
+        @keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+        
+        body.scroll-active { overflow-y: auto; }
+    </style>
+</head>
+<body>
+
+    <canvas id="sakura-canvas"></canvas>
+
+    <div class="ambient-light">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <audio id="bg-music" loop preload="auto">
+        <source src="song.mp3" type="audio/mpeg">
+    </audio>
+
+    <audio id="chal-audio" preload="auto">
+        <source src="chal.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="audio-pool" style="display:none;">
+        <audio id="dang-1" src="dang.mp3" preload="auto"></audio>
+        <audio id="dang-2" src="dang.mp3" preload="auto"></audio>
+        <audio id="dang-3" src="dang.mp3" preload="auto"></audio>
+        <audio id="dang-4" src="dang.mp3" preload="auto"></audio>
+        <audio id="dang-5" src="dang.mp3" preload="auto"></audio>
+    </div>
+
+    <div id="entry-screen">
+        <h1 style="font-size: 1.5rem; opacity: 0.8; letter-spacing: 3px;">TAP TO START</h1>
+        <div style="font-size: 3rem; margin-top: 20px; animation: pulse 2s infinite;">❤️</div>
+        <p style="font-size: 0.8rem; margin-top: 20px; opacity: 0.5;">(Sound Required)</p>
+    </div>
+
+    <section>
+        <div class="card gsap-reveal">
+            <h1 class="type-header" data-text="Hey..."></h1>
+            <p class="type-para" data-text="I’ve been hiding this feeling for a while now."></p>
+            <p style="font-size: 0.8rem; margin-top: 15px; opacity: 0.6;">(Scroll down slowly)</p>
+        </div>
+    </section>
+
+    <section>
+        <div class="card gsap-reveal">
+            <h1 class="type-header" data-text="Gathering Data"></h1>
+            <p class="type-para" data-text="Accessing all the times you made me smile..."></p>
+        </div>
+    </section>
+
+    <section>
+        <div class="card gsap-reveal">
+            <h1 class="type-header" data-text="Calculating..."></h1>
+            <div style="font-size: 3rem; margin: 20px; text-align:center;">🧪</div>
+            <p class="type-para" data-text="Scientific analysis confirms you are 100% trouble."></p>
+        </div>
+    </section>
+
+    <section>
+        <div class="card gsap-reveal">
+            <h1 class="type-header" data-text="Wait for it..."></h1>
+            <p class="type-para" data-text="Generating the perfect words to describe you."></p>
+        </div>
+    </section>
+
+    <section>
+        <div class="card gsap-reveal">
+            <h1 class="type-header" data-text="Analyzing Compatibility"></h1>
+             <div style="font-size: 3rem; margin: 20px; text-align:center;">📊</div>
+            <p class="type-para" data-text="Result: Off the charts. It's actually scary."></p>
+        </div>
+    </section>
+
+    <section>
+        <div class="card gsap-reveal">
+            <h1 class="type-header" data-text="Almost Ready"></h1>
+            <div style="font-size: 3rem; margin: 20px; text-align:center;">💓</div>
+            <p class="type-para" data-text="Rendering high-definition emotions..."></p>
+        </div>
+    </section>
+
+    <section>
+        <div class="card gsap-reveal">
+            <h1>It's Ready.</h1>
+            <p>This message is strictly for you.</p>
+            <button class="btn" onclick="startPrank()">OPEN IT</button>
+        </div>
+    </section>
+
+    <div id="loader-screen">
+        <h2 id="loader-text" style="color:white;">Decrypting Heart...</h2>
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <p style="margin-top:20px; font-size: 0.8rem; opacity: 0.7;">(Don't close... this is important)</p>
+    </div>
+
+    <div id="prank-screen"></div>
+
+
+    <script>
+        // --- 1. CHERRY BLOSSOMS ---
+        const canvas = document.getElementById('sakura-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        const petals = [];
+        class Petal {
+            constructor() {
+                this.x = Math.random() * canvas.width; this.y = Math.random() * canvas.height - canvas.height;
+                this.size = Math.random() * 5 + 5; this.speed = Math.random() * 2 + 1;
+                this.angle = Math.random() * 360; this.opacity = Math.random() * 0.5 + 0.3;
+            }
+            update() { this.y += this.speed; this.x += Math.sin(this.angle) * 0.5; this.angle += 0.02; if (this.y > canvas.height) { this.y = -20; this.x = Math.random() * canvas.width; } }
+            draw() { ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle); ctx.fillStyle = `rgba(255, 183, 178, ${this.opacity})`; ctx.beginPath(); ctx.ellipse(0, 0, this.size, this.size / 2, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
+        }
+        function initSakura() { for (let i = 0; i < 80; i++) petals.push(new Petal()); animateSakura(); }
+        function animateSakura() { ctx.clearRect(0, 0, canvas.width, canvas.height); petals.forEach(p => { p.update(); p.draw(); }); requestAnimationFrame(animateSakura); }
+        initSakura();
+        window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+
+        // --- 2. TYPEWRITER ---
+        function typeEffect(element, speed = 50) {
+            const text = element.getAttribute('data-text'); if(!text) return;
+            element.innerText = ""; element.classList.add('cursor');
+            let i = 0;
+            function type() { if (i < text.length) { element.innerText += text.charAt(i); i++; setTimeout(type, speed); } else { element.classList.remove('cursor'); } }
+            type();
+        }
+
+        // --- 3. AUDIO SETUP ---
+        const entryScreen = document.getElementById('entry-screen');
+        const bgMusic = document.getElementById('bg-music');
+        const chalAudio = document.getElementById('chal-audio');
+        
+        // CREATE AUDIO POOL ARRAY
+        const dangSounds = [
+            document.getElementById('dang-1'),
+            document.getElementById('dang-2'),
+            document.getElementById('dang-3'),
+            document.getElementById('dang-4'),
+            document.getElementById('dang-5')
+        ];
+        let dangIndex = 0;
+
+        entryScreen.addEventListener('click', () => {
+            gsap.to(entryScreen, { opacity: 0, duration: 1, onComplete: () => {
+                entryScreen.style.display = 'none'; document.body.classList.add('scroll-active');
+            }});
+            bgMusic.volume = 0.6; 
+            bgMusic.play();
+        });
+
+        gsap.registerPlugin(ScrollTrigger);
+        document.querySelectorAll('.gsap-reveal').forEach(card => {
+            gsap.to(card, {
+                y: 0, opacity: 1, duration: 1.5, ease: "power3.out",
+                scrollTrigger: {
+                    trigger: card, start: "top 75%",
+                    onEnter: () => {
+                        const h = card.querySelector('.type-header'); const p = card.querySelector('.type-para');
+                        if(h) typeEffect(h, 80); if(p) setTimeout(() => typeEffect(p, 30), 1000);
+                    }
+                }
+            });
+        });
+
+        // --- 4. PRANK LOGIC (AUDIO FIX) ---
+        function startPrank() {
+            Swal.fire({
+                title: 'Final Warning', text: "The content you are about to see is extremely cheesy.", icon: 'warning',
+                showCancelButton: true, confirmButtonColor: '#ff004c', cancelButtonColor: '#333',
+                confirmButtonText: 'I am ready!', background: '#111', color: '#fff'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // *** CRITICAL FIX: UNLOCK ALL AUDIO NOW ***
+                    // We iterate through every audio file and play/pause it 
+                    // This forces the browser to accept them as "user allowed"
+                    
+                    chalAudio.play(); chalAudio.pause(); chalAudio.currentTime = 0;
+
+                    dangSounds.forEach(sound => {
+                        sound.volume = 0.8;
+                        sound.play(); 
+                        sound.pause();
+                        sound.currentTime = 0;
+                    });
+                    
+                    runFakeLoader();
+                }
+            });
+        }
+
+        function runFakeLoader() {
+            const loader = document.getElementById('loader-screen');
+            const bar = document.getElementById('progress-bar');
+            const text = document.getElementById('loader-text');
+            loader.style.display = 'flex';
+            
+            let width = 0;
+            const interval = setInterval(() => {
+                width++;
+                bar.style.width = width + '%';
+                if (width === 20) text.innerText = "Downloading Roses...";
+                if (width === 50) text.innerText = "Converting feelings to text...";
+                if (width === 80) text.innerText = "Overriding system...";
+                
+                if (width >= 100) {
+                    clearInterval(interval);
+                    triggerMemeChaos();
+                }
+            }, 50); 
+        }
+
+        function triggerMemeChaos() {
+            const loader = document.getElementById('loader-screen');
+            const prankScreen = document.getElementById('prank-screen');
+            
+            bgMusic.pause(); bgMusic.currentTime = 0;
+            loader.style.display = 'none';
+            prankScreen.style.display = 'block';
+
+            // PLAY CHAL CHAL
+            chalAudio.volume = 1.0;
+            chalAudio.currentTime = 0;
+            chalAudio.play().catch(e => console.log("Chal Audio error:", e));
+
+            // Start Chaos
+            createMemeImage(true);
+
+            let count = 0;
+            const maxImages = 40; 
+            
+            setTimeout(() => {
+                const chaosInterval = setInterval(() => {
+                    count++;
+                    if (count > maxImages) {
+                        clearInterval(chaosInterval);
+                        const h1 = document.createElement('h1');
+                        h1.innerText = "GOTCHA! 🤣";
+                        h1.style.position = 'fixed'; h1.style.top = '50%'; h1.style.left = '50%';
+                        h1.style.transform = 'translate(-50%, -50%)'; h1.style.zIndex = '1000';
+                        h1.style.color = 'black'; h1.style.fontSize = '4rem'; h1.style.textShadow = '2px 2px 0px white';
+                        prankScreen.appendChild(h1);
+                    } else {
+                        createMemeImage(false);
+                    }
+                }, 350); 
+            }, 600);
+        }
+
+        function createMemeImage(isFirst) {
+            const prankScreen = document.getElementById('prank-screen');
+            const img = document.createElement('img');
+            img.src = "meme.jpg"; 
+            img.classList.add('meme-popup');
+
+            if (isFirst) {
+                img.classList.add('meme-center');
+            } else {
+                const x = Math.random() * (window.innerWidth - 250);
+                const y = Math.random() * (window.innerHeight - 250);
+                img.style.left = x + 'px'; img.style.top = y + 'px';
+
+                // PLAY NEXT DANG SOUND FROM POOL
+                // This cycles: 0, 1, 2, 3, 4, 0, 1...
+                const currentSound = dangSounds[dangIndex];
+                currentSound.currentTime = 0;
+                currentSound.play().catch(e => console.log("Dang sound error:", e));
+                
+                dangIndex++;
+                if (dangIndex >= dangSounds.length) dangIndex = 0;
+            }
+            prankScreen.appendChild(img);
+        }
+    </script>
+</body>
+</html>
